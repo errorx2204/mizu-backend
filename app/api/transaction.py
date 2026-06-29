@@ -1,29 +1,42 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, HTTPException
 from typing import List
-from app.database import get_db
-from app.models.transaction import Transaction
-from app.schemas.transaction import TransactionCreate, TransactionResponse
+from app.database import supabase
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
-@router.post("/", response_model=TransactionResponse)
-def create_transaction(transaction: TransactionCreate, user_id: int, db: Session = Depends(get_db)):
-    db_transaction = Transaction(**transaction.dict(), user_id=user_id)
-    db.add(db_transaction)
-    db.commit()
-    db.refresh(db_transaction)
-    return db_transaction
+@router.post("/")
+def create_transaction(transaction: dict, user_id: int):
+    result = supabase.table("transactions").insert({
+        "user_id": user_id,
+        "title": transaction["title"],
+        "amount": transaction["amount"],
+        "category": transaction["category"],
+        "type": transaction["type"]
+    }).execute()
+    
+    if not result.data:
+        raise HTTPException(status_code=500, detail="Failed to create transaction")
+    
+    return result.data[0]
 
-@router.get("/", response_model=List[TransactionResponse])
-def get_transactions(user_id: int, db: Session = Depends(get_db)):
-    return db.query(Transaction).filter(Transaction.user_id == user_id).order_by(Transaction.created_at.desc()).all()
+@router.get("/")
+def get_transactions(user_id: int):
+    result = supabase.table("transactions")\
+        .select("*")\
+        .eq("user_id", user_id)\
+        .order("created_at", desc=True)\
+        .execute()
+    
+    return result.data if result.data else []
 
 @router.delete("/{transaction_id}")
-def delete_transaction(transaction_id: int, db: Session = Depends(get_db)):
-    db_transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
-    if not db_transaction:
+def delete_transaction(transaction_id: int):
+    result = supabase.table("transactions")\
+        .delete()\
+        .eq("id", transaction_id)\
+        .execute()
+    
+    if not result.data:
         raise HTTPException(status_code=404, detail="Transaction not found")
-    db.delete(db_transaction)
-    db.commit()
+    
     return {"message": "Transaction deleted"}

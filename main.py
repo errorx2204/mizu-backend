@@ -1,10 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import engine, Base
 from app.api import auth, transaction, budget
-
-# Create database tables
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="MIZU API",
@@ -31,7 +27,8 @@ def root():
     return {
         "message": "MIZU API is running",
         "status": "healthy",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "database": "Supabase PostgreSQL"
     }
 
 @app.get("/health")

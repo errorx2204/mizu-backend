@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, transaction, budget
+from app.api import auth, transaction, budget, insights
 
 app = FastAPI(
     title="MIZU API",
@@ -21,6 +21,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(transaction.router)
 app.include_router(budget.router)
+app.include_router(insights.router)
 
 @app.get("/")
 def root():

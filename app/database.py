@@ -1,28 +1,23 @@
-from supabase import create_client, Client
 import os
+from supabase import create_client, Client
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
 load_dotenv()
 
-# Supabase credentials from environment variables
-SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise ValueError("SUPABASE_URL and SUPABASE_KEY must be set in .env file")
+# Validate env vars with clear error messages
+if not SUPABASE_URL:
+    raise ValueError("SUPABASE_URL environment variable is not set!")
+if not SUPABASE_KEY:
+    raise ValueError("SUPABASE_KEY environment variable is not set!")
 
-# Create Supabase client
+# Strip any accidental whitespace
+SUPABASE_URL = SUPABASE_URL.strip()
+SUPABASE_KEY = SUPABASE_KEY.strip()
+
+print(f"DEBUG: SUPABASE_URL = {SUPABASE_URL}")
+print(f"DEBUG: SUPABASE_KEY starts with = {SUPABASE_KEY[:20]}...")
+
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-# SQLAlchemy compatibility stubs (for any code that still imports these)
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-
-engine = create_engine("sqlite:///./mizu.db", connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
-
-def get_db():
-    return supabase
